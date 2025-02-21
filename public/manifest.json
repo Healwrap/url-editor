@@ -1,0 +1,52 @@
+{
+	"name": "免登调试插件",
+	"version": "0.0.0",
+	"description": "",
+	"manifest_version": 3,
+	"background": {
+		"service_worker": "background/index.js"
+	},
+	"content_scripts": [
+		{
+			"matches": ["<all_urls>"],
+			"exclude_matches": [
+				"*://localhost/content/*"
+			],
+			"js": ["content/index.js"],
+			"css": ["content/index.css"],
+			"run_at": "document_end"
+		}
+	],
+	"permissions": [
+		"storage",
+		"declarativeContent",
+		"bookmarks",
+		"webRequest",
+		"tabs"
+	],
+	"host_permissions": [
+		"<all_urls>"
+	],
+	"web_accessible_resources": [
+		{
+			"resources": ["/app.png"],
+			"matches": ["<all_urls>"]
+		}
+	],
+	"action": {
+		"default_popup": "popup.html",
+		"default_icon": {
+			"16": "/app.png",
+			"32": "/app.png",
+			"48": "/app.png",
+			"128": "/app.png"
+		},
+		"default_title": "免登调试插件"
+	},
+	"icons": {
+		"16": "/app.png",
+		"32": "/app.png",
+		"48": "/app.png",
+		"128": "/app.png"
+	}
+}

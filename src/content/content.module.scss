@@ -1,0 +1,19 @@
+.widget {
+	.inner {
+		.floatButton {
+			position: fixed;
+			bottom: 20px;
+			right: 20px;
+			z-index: 1000;
+		}
+	}
+}
+
+.editModal {
+	max-height: 800px;
+}
+
+.editModalBody {
+	max-height: 700px;
+	overflow: auto;
+}

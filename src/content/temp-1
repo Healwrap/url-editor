@@ -1,0 +1,125 @@
+import { Input, Button, Form, message, Card, Row, Col, Modal } from "antd";
+import { QRCodeSVG } from "qrcode.react";
+import URI from "urijs";
+
+const [inputUrl, setInputUrl] = useState("");
+	const [outputUrl, setOutputUrl] = useState("");
+	const [queryParams, setQueryParams] = useState<Record<string, string>>({});
+	const [isModalVisible, setIsModalVisible] = useState(false);
+
+	const parseUrl = () => {
+		try {
+			const uri = new URI(inputUrl);
+			const query = uri.query(true);
+			setQueryParams(query);
+		} catch (error) {
+			message.error("URL解析失败:" + error);
+		}
+	};
+
+	const updateUrl = () => {
+		try {
+			const uri = new URI(inputUrl);
+			uri.query(queryParams);
+			setOutputUrl(uri.toString());
+		} catch (error) {
+			message.error("URL更新失败:" + error);
+		}
+	};
+
+	const copyToClipboard = (text: string) => {
+		navigator.clipboard.writeText(text).then(() => {
+			message.success("已复制到剪贴板");
+		});
+	};
+
+	const addCustomParam = () => {
+		setQueryParams({ ...queryParams, "": "" });
+	};
+
+	const handleParamChange = (key: string, value: string) => {
+		setQueryParams({ ...queryParams, [key]: value });
+	};
+
+<RequestInfoCard />
+					<Card title="URL编辑器">
+						<Form layout="vertical">
+							<Form.Item label="输入URL">
+								<Input
+									value={inputUrl}
+									onChange={(e) => setInputUrl(e.target.value)}
+									addonAfter={
+										<>
+											<Button onClick={() => copyToClipboard(inputUrl)}>
+												复制
+											</Button>
+											<Button onClick={() => window.open(inputUrl, "_blank")}>
+												新标签页打开
+											</Button>
+										</>
+									}
+								/>
+							</Form.Item>
+							<Button type="primary" onClick={parseUrl}>
+								解析URL
+							</Button>
+						</Form>
+					</Card>
+
+					<Card title="调整参数" style={{ marginTop: 20 }}>
+						{Object.keys(queryParams).map((key, index) => (
+							<Row key={index} gutter={16} style={{ marginBottom: 10 }}>
+								<Col span={10}>
+									<Input
+										placeholder="key"
+										value={key}
+										onChange={(e) =>
+											handleParamChange(e.target.value, queryParams[key])
+										}
+									/>
+								</Col>
+								<Col span={10}>
+									<Input
+										placeholder="value"
+										value={queryParams[key]}
+										onChange={(e) => handleParamChange(key, e.target.value)}
+									/>
+								</Col>
+								<Col span={4}>
+									<Button onClick={() => copyToClipboard(queryParams[key])}>
+										复制
+									</Button>
+								</Col>
+							</Row>
+						))}
+						<Button onClick={addCustomParam}>添加新的参数</Button>
+					</Card>
+
+					<Card title="输出结果" style={{ marginTop: 20 }}>
+						<Button type="primary" onClick={updateUrl}>
+							更新URL
+						</Button>
+						<Input
+							value={outputUrl}
+							readOnly
+							addonAfter={
+								<>
+									<Button onClick={() => copyToClipboard(outputUrl)}>
+										复制
+									</Button>
+									<Button onClick={() => window.open(outputUrl, "_blank")}>
+										新标签页打开
+									</Button>
+								</>
+							}
+							style={{ marginTop: 10 }}
+						/>
+						{outputUrl.length !== 0 && (
+							<QRCodeSVG
+								value={outputUrl}
+								width={256}
+								height={256}
+								style={{ marginTop: 20 }}
+							/>
+						)}
+					</Card>
