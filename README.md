@@ -30,16 +30,24 @@
   2. 需要关注manifest.json的配置
   3. 不能同时支持多个浏览器
   4. content script比较难隔离，需要使用shadow dom、iframe等操作隔离
-1. WXT
+2. Plasmo
+  1. 不会自动安装插件，但是都支持热更新
+  2. 支持多个浏览器
+  3. 内容放在plasmo-csui的shadow dom中，可以实现样式隔离
+3. WXT
   1. 脚手架快速生成，支持热更新，支持自动安装插件
   2. 可以同时支持多个浏览器
-  3. ...
-2. Plasmo
-  1. ...
+  3. 有多种隔离方案，不过基本使用shadow dom，和plasmo差不多
+4. 选择方案
+  1. 相比于原生开发, 使用框架可以节省配置的时间、包括HMR、或者自动安装插件(实际上作用不大)
+  2. 框架都配置有隔离方案，包括shadow dom、iframe等，可以实现样式隔离，而原生开发需要自己实现(没啥思路)
+  3. plasmo和wxt，plasmo相比更加成熟，包括就antd的集成，wxt就没有相关文档，所以暂时选择plasmo(主要是也没怎么熟悉这两个框架)
 
 
 
 ### 参考资料
 
+- https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world?hl=zh-cn
 - https://blog.csdn.net/Backspace110/article/details/125262468
 - https://wxt.dev
+- https://docs.plasmo.com/
