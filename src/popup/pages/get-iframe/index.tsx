@@ -22,14 +22,14 @@ const App: React.FC = () => {
 
   const { tab } = useContext(ConfigContext)
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page)
-  }
-
   const paginatedLinks = links.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   )
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
 
   return (
     <Card title="获取iframe链接" extra={<p>获取网页中的链接，方便调试</p>}>
@@ -60,6 +60,7 @@ const App: React.FC = () => {
                 跳转
               </Button>
             ]}>
+            {/* TODO 考虑增加一个修改iframe链接的功能 */}
             <List.Item.Meta
               title={
                 <div

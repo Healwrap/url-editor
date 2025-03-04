@@ -49,3 +49,9 @@
 
 import browser from "webextension-polyfill"
 
+// 扩展安装时打开选项页
+browser.runtime.onInstalled.addListener(function (details) {
+  if (details.reason === "install") {
+    chrome.tabs.create({ url: "options.html" })
+  }
+})

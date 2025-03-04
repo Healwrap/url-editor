@@ -5,7 +5,8 @@ import {
   EditOutlined,
   LinkOutlined,
   PlusOutlined,
-  SyncOutlined
+  SyncOutlined,
+  UndoOutlined
 } from "@ant-design/icons"
 import { Button, Card, Col, Divider, Form, Input, Row, Space } from "antd"
 import ButtonGroup from "antd/es/button/button-group"
@@ -122,6 +123,13 @@ const EditCurrent: React.FC = () => {
               type="primary"
               onClick={() => url && openPage(tab, url)}>
               新标签页打开
+            </Button>
+            <Button
+              icon={<UndoOutlined />}
+              type="primary"
+              onClick={() => url && reloadPage(tab)}
+              >
+              刷新页面
             </Button>
           </ButtonGroup>
           <Divider dashed />

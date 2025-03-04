@@ -5,7 +5,9 @@ import browser from "webextension-polyfill"
 
 import styles from "./index.module.scss"
 import EditCurrent from "./pages/edit-current"
+import EditUrl from "./pages/edit-url"
 import GetIframe from "./pages/get-iframe"
+import QuickJump from "./pages/quick-jump"
 
 const { TabPane } = Tabs
 
@@ -22,21 +24,24 @@ const App = () => {
   return (
     <ConfigContext.Provider value={{ tab }}>
       <div className={styles["popup-container"]}>
-        <Tabs defaultActiveKey="1">
+        <Tabs
+          defaultActiveKey="1"
+          onChange={(key) =>
+            key === "5" && window.open("./options.html", "__black")
+          }>
           <TabPane tab="编辑当前页面" key="1">
             <EditCurrent></EditCurrent>
           </TabPane>
           <TabPane tab="获取免登链接" key="2">
-            {/* 页面2的内容 */}
-            <p>这是页面2的内容</p>
+            <EditUrl></EditUrl>
           </TabPane>
           <TabPane tab="获取iframe链接" key="3">
             <GetIframe></GetIframe>
           </TabPane>
           <TabPane tab="相关文档" key="4">
-            {/* 页面3的内容 */}
-            <p>这是页面3的内容</p>
+            <QuickJump></QuickJump>
           </TabPane>
+          <TabPane tab="使用教程" key="5"></TabPane>
         </Tabs>
       </div>
     </ConfigContext.Provider>
