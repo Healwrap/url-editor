@@ -1,4 +1,3 @@
-;
 // let currentListener: (() => void) | null = null;
 
 // function addWebRequestListener(tabId: number) {
@@ -48,9 +47,5 @@
 // // 初始加载时添加监听
 // updateListenerForActiveTab();
 
-import "@plasmohq/messaging/background"
+import browser from "webextension-polyfill"
 
-import { startHub } from "@plasmohq/messaging/pub-sub"
-
-console.log(`BGSW - Starting Hub`)
-startHub()

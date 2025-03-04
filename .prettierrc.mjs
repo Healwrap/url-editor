@@ -1,26 +1,24 @@
 /**
- * @type {import('prettier').Options}
+ * @type {import('prettier').Config}
  */
-export default {
-  printWidth: 80,
+const config = {
+  printWidth: 120,
   tabWidth: 2,
   useTabs: false,
-  semi: false,
-  singleQuote: false,
-  trailingComma: "none",
+  semi: true,
+  singleQuote: true,
+  quoteProps: 'as-needed',
+  jsxSingleQuote: false,
+  trailingComma: 'es5',
   bracketSpacing: true,
-  bracketSameLine: true,
-  plugins: ["@ianvs/prettier-plugin-sort-imports"],
-  importOrder: [
-    "<BUILTIN_MODULES>", // Node.js built-in modules
-    "<THIRD_PARTY_MODULES>", // Imports not matched by other special words or groups.
-    "", // Empty line
-    "^@plasmo/(.*)$",
-    "",
-    "^@plasmohq/(.*)$",
-    "",
-    "^~(.*)$",
-    "",
-    "^[./]"
-  ]
+  bracketSameLine: false,
+  arrowParens: 'always',
+  proseWrap: 'preserve',
+  htmlWhitespaceSensitivity: 'css',
+  vueIndentScriptAndStyle: false,
+  endOfLine: 'lf',
+  embeddedLanguageFormatting: 'auto',
+  singleAttributePerLine: false,
 }
+
+export default config;
