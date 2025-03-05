@@ -25,7 +25,6 @@
   "devDependencies": {
     "@eslint/js": "^9.19.0",
     "@ianvs/prettier-plugin-sort-imports": "4.1.1",
-    "@types/chrome": "0.0.258",
     "@types/node": "20.11.5",
     "@types/react": "18.2.48",
     "@types/react-dom": "18.2.18",
@@ -49,6 +48,14 @@
       "bookmarks",
       "webRequest",
       "tabs"
-    ]
+    ],
+    "commands": {
+      "open-popup": {
+        "suggested_key": {
+          "default": "Ctrl+Shift+E"
+        },
+        "description": "Open the popup"
+      }
+    }
   }
 }
