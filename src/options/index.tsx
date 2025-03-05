@@ -12,7 +12,7 @@ export default function App() {
       <h2>编辑页面URL</h2>
       <p>1. 启动插件，选择第一个Tab，可以使用编辑页面URL功能</p>
       <p>
-        2. 或者使用快捷键 <code>Ctrl/Cmd+Shift+E</code> 打开插件
+        2. 或者使用快捷键 <code>Ctrl/Cmd+Shift+1</code> 打开插件
       </p>
       <Image src="https://picgo-img-repo.oss-cn-beijing.aliyuncs.com/img/7e465e2fbd26efb6dce6712e62fd147e.png" />
       <h2>获取iframe链接</h2>

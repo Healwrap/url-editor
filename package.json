@@ -52,9 +52,14 @@
     "commands": {
       "open-popup": {
         "suggested_key": {
-          "default": "Ctrl+Shift+E"
+          "default": "Ctrl+Shift+1",
+          "mac": "Command+Shift+1",
+          "linux": "Ctrl+Shift+1",
+          "chromeos": "Ctrl+Shift+1",
+          "windows": "Ctrl+Shift+1"
         },
-        "description": "Open the popup"
+        "description": "Open the popup",
+        "global": true
       }
     }
   }
