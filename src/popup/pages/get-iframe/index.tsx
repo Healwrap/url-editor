@@ -22,9 +22,13 @@ const App: React.FC = () => {
   };
 
   const getLinks = async () => {
-    const res = await getIframeLinks(tab);
-    if (!res.length) message.error('未获取到iframe链接');
-    setLinks(res);
+    try {
+      const res = await getIframeLinks(tab);
+      if (!res.length) message.error('未获取到iframe链接');
+      setLinks(res);
+    } catch {
+      message.error('与content script通信失败，请手动刷新页面重试');
+    }
   };
 
   return (

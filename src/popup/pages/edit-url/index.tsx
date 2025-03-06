@@ -58,8 +58,12 @@ export default function App() {
 
   const handleOpen = async (open: boolean) => {
     setLinks([]);
-    port.current = browser.runtime.connect({ name: 'popup' });
-    port.current?.postMessage({ tabId: tab.id, urlReg, enable: open });
+    try {
+      port.current = browser.runtime.connect({ name: 'popup' });
+      port.current?.postMessage({ tabId: tab.id, urlReg, enable: open });
+    } catch {
+      message.error('与background通信失败，请手动刷新页面重试');
+    }
   };
   const handleGetLoginAccessURL = async () => {
     const res = await getLoginAccessURL('test');

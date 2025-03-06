@@ -40,14 +40,15 @@
   },
   "manifest": {
     "host_permissions": [
-      "https://*/*"
+      "<all_urls>"
     ],
     "permissions": [
       "storage",
       "declarativeContent",
       "bookmarks",
       "webRequest",
-      "tabs"
+      "tabs",
+      "activeTab"
     ],
     "commands": {
       "open-popup": {

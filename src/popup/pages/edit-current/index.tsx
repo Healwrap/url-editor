@@ -10,7 +10,7 @@ import {
   SyncOutlined,
   UndoOutlined,
 } from '@ant-design/icons';
-import { Button, Card, Col, Divider, Form, Input, Row, Space } from 'antd';
+import { Button, Card, Col, Divider, Form, Input, message, Row, Space } from 'antd';
 import ButtonGroup from 'antd/es/button/button-group';
 import { QRCodeSVG } from 'qrcode.react';
 import React, { useContext, useEffect, useRef, useState } from 'react';
@@ -61,7 +61,12 @@ const EditCurrent: React.FC = () => {
 
   useEffect(() => {
     (async () => {
-      setUrl(await getCurrentURL(tab));
+      if (!tab?.id) return;
+      try {
+        setUrl(await getCurrentURL(tab));
+      } catch {
+        message.error('与content script通信失败，请手动刷新页面重试');
+      }
     })();
   }, [tab]);
 
