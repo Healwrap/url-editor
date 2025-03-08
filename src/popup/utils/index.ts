@@ -7,8 +7,8 @@ export const getCurrentURL = async (tab: Browser.Tabs.Tab) => {
   return await sendMessage('getURL', undefined, { tabId: tab.id });
 };
 
-export const getIframeLinks = async (tab: Browser.Tabs.Tab) => {
-  return await sendMessage('getIrameLinks', undefined, { tabId: tab.id });
+export const getLinks = async (tab: Browser.Tabs.Tab, categories: string[]) => {
+  return await sendMessage('getLinks', categories, { tabId: tab.id });
 };
 
 export const openPage = async (tab: Browser.Tabs.Tab, url: string) => {

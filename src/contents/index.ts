@@ -1,6 +1,3 @@
-import { message } from 'antd';
-import browser from 'webextension-polyfill';
-
 import { onMessage, sendMessage } from '~/messaging';
 
 onMessage('getURL', (message) => {
@@ -21,14 +18,42 @@ onMessage('setURL', (message) => {
   return true;
 });
 
-onMessage('getIrameLinks', (message) => {
-  console.log('获取iframe链接');
-  const iframes = document.querySelectorAll('iframe');
-  const links = Array.from(iframes).map((iframe) => iframe.src);
-  return links.map((item, index) => ({ url: item, key: index }));
+onMessage('getLinks', (message) => {
+  console.log(`获取${message.data}链接`);
+  const res = {};
+  Object.values(message.data).forEach((key) => {
+    switch (key) {
+      case 'iframe':
+        const iframes = document.querySelectorAll('iframe');
+        res[key] = Array.from(iframes)
+          .map((iframe) => iframe.src)
+          .filter((src) => src)
+          .map((item, index) => ({ url: item, key: index }));
+        break;
+      case 'a':
+        const aElems = document.querySelectorAll<HTMLAnchorElement>('a');
+        res[key] = Array.from(aElems)
+          .map((link) => link.href)
+          .filter((link) => link)
+          .map((link, index) => ({ url: link, key: index }));
+        break;
+      case 'img':
+        const imgElems = document.querySelectorAll<HTMLImageElement>('img');
+        res[key] = Array.from(imgElems)
+          .map((img) => img.src)
+          .filter((src) => src)
+          .map((img, index) => ({ url: img, key: index }));
+        break;
+      default:
+        break;
+    }
+  });
+  return res;
 });
 
 onMessage('reloadPage', (message) => {
+  console.log('reloadPage');
+
   // 如果传入url，则在当前页面打开
   if (message.data) {
     // 如果当前url==message.data，则不会刷新页面

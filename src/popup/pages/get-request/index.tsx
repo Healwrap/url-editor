@@ -67,7 +67,11 @@ export default function App() {
   };
   const handleGetLoginAccessURL = async () => {
     const res = await getLoginAccessURL('test');
-    if (!res.length) message.error('未获取到免登链接');
+    if (!open) {
+      message.error('请先打开请求监听');
+      return;
+    }
+    if (!res.length) message.error('未获取到请求链接，尝试刷新页面');
     setLinks(res);
   };
 
@@ -87,8 +91,8 @@ export default function App() {
   }, [open]);
 
   return (
-    <Card title="获取免登链接" extra={<p>仅商户平台内部分页面生效，需要定制可自行修改代码</p>}>
-      <Alert message="先打开请求监听，再点击刷新页面，即可获取免登链接" description="" showIcon />
+    <Card title="获取请求链接" extra={<p>定制一个请求匹配规则，然后可以获取到当前这个网页中的这个请求的URL</p>}>
+      <Alert message="先打开请求监听，再点击刷新页面，即可获取请求链接" description="" showIcon />
       <Divider dashed />
       <FormItem label="环境">
         <Select value={selectedEnv} onChange={(value) => setSelectedEnv(value)} style={{ width: 200, marginRight: 20 }}>
@@ -122,9 +126,9 @@ export default function App() {
         />
         <ButtonGroup>
           <Button type="primary" onClick={() => handleGetLoginAccessURL()}>
-            获取免登链接
+            获取请求链接
           </Button>
-          <Button type="primary" onClick={() => reloadPage(tab)}>
+          <Button type="primary" onClick={() => (links && setLinks([]), reloadPage(tab))}>
             刷新页面
           </Button>
         </ButtonGroup>
@@ -144,7 +148,6 @@ export default function App() {
               </Button>,
             ]}
           >
-            {/* TODO 考虑增加一个修改iframe链接的功能 */}
             <List.Item.Meta
               title={
                 <div

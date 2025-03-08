@@ -178,7 +178,7 @@ const EditCurrent: React.FC = () => {
             {url && (
               <div style={{ marginTop: 20, position: 'sticky', top: 140 }}>
                 <QRCodeSVG value={url} size={256} />
-                <div>注：移动端需要使用免登链接才能打开</div>
+                <div style={{ fontSize: 11 }}>注：移动端可能需要一些特殊的参数和链接才可以访问</div>
               </div>
             )}
           </Col>

@@ -4,7 +4,7 @@ interface ProtocolMap {
   getURL(data: string): string;
   setURL(data: string): boolean;
   openURL(data: string): boolean;
-  getIrameLinks(data: string): { url: string; key: number }[];
+  getLinks(data: string[]): { [key in string]: { url: string; key: number }[] };
   reloadPage(data: string): boolean;
   forwardAndBack(data: { action: 'forward' | 'back'; n?: number }): boolean;
   getLoginAcessURL(data: string): any[];
