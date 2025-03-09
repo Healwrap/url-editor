@@ -21,34 +21,6 @@ const linkCategories = {
   '3': '测试工具',
 };
 
-// const defaultLinks = {
-//   '1': [
-//     // 测试链接
-//     { id: randomString(10), title: '女娲线下&线上灰度账号', url: 'https://km.sankuai.com/collabpage/1812812677' },
-//     { id: randomString(10), title: '【Test】环境账号集合', url: 'https://km.sankuai.com/page/1337555711' },
-//   ],
-//   '2': [
-//     // 平台直达
-//     {
-//       id: randomString(10),
-//       title: '盘古',
-//       url: 'https://crm04.meishi.test.sankuai.com/partner/manage/main/settle?partnerId=40914175',
-//     },
-//     {
-//       id: randomString(10),
-//       title: '开店宝',
-//       url: 'https://ecom.meishi.test.meituan.com/meishi/?cate=24236#https://fspb.test.meituan.com/mwallet/front/common/login-access?source=1&page=daocanMwalletList&type=PC&mwallet_channel=side-menu&bizType=12000&iphPayMerchantNo=1020502813&useSSL=true',
-//     },
-//   ],
-//   '3': [
-//     // 测试工具
-//     { id: randomString(10), title: 'PAPI', url: 'https://a.sankuai.com/index' },
-//     { id: randomString(10), title: 'QAHome', url: 'https://qahome.sankuai.com/#/index' },
-//     { id: randomString(10), title: 'HPX', url: 'https://hpx.sankuai.com/' },
-//     { id: randomString(10), title: 'QDC', url: 'https://qdc.mws.sankuai.com/qdc/tool/list' },
-//   ],
-// };
-
 export default function App() {
   const { tab } = useContext(ConfigContext);
 

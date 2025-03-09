@@ -19,8 +19,10 @@ import {
   Form,
   Input,
   message,
+  Modal,
   Row,
   Space,
+  Alert,
   type AutoCompleteProps,
 } from 'antd';
 import ButtonGroup from 'antd/es/button/button-group';
@@ -84,6 +86,10 @@ const EditCurrent: React.FC = () => {
   const [paramValueOptions, setParamValueOptions] = useState<AutoCompleteProps['options']>([]);
   // 记录host相关数据
   const [hostData, setHostData] = useStorage<HostDataType>('hostData', {});
+  // 修改host记录相关
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [hostDataText, setHostDataText] = useState('');
+  const [parseError, setParseError] = useState('');
 
   const isFirstRender = useRef(true); // 用于标记是否首次渲染
 
@@ -248,6 +254,76 @@ const EditCurrent: React.FC = () => {
     }
   }, [params]);
 
+  const showModal = () => {
+    if (!host) {
+      message.error('没有可编辑的域名信息');
+      return;
+    }
+
+    // 获取当前域名下的数据
+    const currentHostData = hostData[host] || { param: {}, path: [], fragment: [] };
+
+    // 将数据转换为格式化的JSON字符串
+    setHostDataText(JSON.stringify(currentHostData, null, 2));
+    setParseError('');
+    setIsModalVisible(true);
+  };
+
+  const hideModal = () => {
+    setIsModalVisible(false);
+    setParseError('');
+  };
+
+  const handleTextChange = (e) => {
+    setHostDataText(e.target.value);
+    setParseError('');
+  };
+
+  const handleSubmit = () => {
+    if (!hostDataText || hostDataText.trim() === '') {
+      // 空内容视为删除所有记录
+      const newHostData = { ...hostData };
+      delete newHostData[host];
+      setHostData(newHostData);
+      message.success('删除成功');
+      setIsModalVisible(false);
+      return;
+    }
+    try {
+      // 尝试解析JSON
+      const parsedData = JSON.parse(hostDataText);
+
+      // 验证数据格式是否正确
+      if (
+        !parsedData.param ||
+        typeof parsedData.param !== 'object' ||
+        !Array.isArray(parsedData.path) ||
+        !Array.isArray(parsedData.fragment)
+      ) {
+        setParseError('数据格式不正确，必须包含param、path、fragment字段');
+        return;
+      }
+
+      // 验证param的结构
+      for (const key in parsedData.param) {
+        if (!Array.isArray(parsedData.param[key])) {
+          setParseError(`param.${key} 必须是数组类型`);
+          return;
+        }
+      }
+
+      // 更新hostData
+      const newHostData = { ...hostData };
+      newHostData[host] = parsedData;
+      setHostData(newHostData);
+
+      message.success('更新成功');
+      setIsModalVisible(false);
+    } catch (error) {
+      setParseError('JSON格式错误: ' + error.message);
+    }
+  };
+
   return (
     <Form layout="vertical">
       <Card title="调整URL" extra={<p>方便调整当前页面的URL，包括参数，生成对应的二维码，便于手机调试</p>}>
@@ -270,27 +346,52 @@ const EditCurrent: React.FC = () => {
               onClick={async () => {
                 setUrl(await getCurrentURL(tab));
               }}
-            >
-              重置
-            </Button>
-            <Button icon={<CopyOutlined />} onClick={() => copyToClipboard(url)}>
-              复制
-            </Button>
+            ></Button>
+            <Button icon={<CopyOutlined />} onClick={() => copyToClipboard(url)}></Button>
           </Space.Compact>
-          <ButtonGroup style={{ marginTop: 20 }}>
-            <Button icon={<ArrowLeftOutlined />} type="primary" onClick={() => forwardAndBack(tab, 'back')}>
-              回退
+          <Space style={{ marginTop: 20, justifyContent: 'space-between', width: '100%' }}>
+            <Space.Compact>
+              <Button icon={<ArrowLeftOutlined />} type="primary" onClick={() => forwardAndBack(tab, 'back')}>
+                回退
+              </Button>
+              <Button icon={<LinkOutlined />} type="primary" onClick={handleOpenPage}>
+                新标签页打开
+              </Button>
+              <Button icon={<UndoOutlined />} type="primary" onClick={() => url && reloadPage(tab)}>
+                刷新页面
+              </Button>
+              <Button icon={<ArrowRightOutlined />} type="primary" onClick={() => forwardAndBack(tab, 'forward')}>
+                前进
+              </Button>
+            </Space.Compact>
+            <Button icon={<EditOutlined />} type="primary" onClick={showModal}>
+              编辑当前域名下的记录
             </Button>
-            <Button icon={<LinkOutlined />} type="primary" onClick={handleOpenPage}>
-              新标签页打开
-            </Button>
-            <Button icon={<UndoOutlined />} type="primary" onClick={() => url && reloadPage(tab)}>
-              刷新页面
-            </Button>
-            <Button icon={<ArrowRightOutlined />} type="primary" onClick={() => forwardAndBack(tab, 'forward')}>
-              前进
-            </Button>
-          </ButtonGroup>
+            <Modal
+              title={`编辑 ${host} 的记录`}
+              open={isModalVisible}
+              onOk={handleSubmit}
+              onCancel={hideModal}
+              width={700}
+            >
+              <Alert
+                message="提示"
+                description="请在下方编辑当前域名的记录，编辑完成后点击确定保存。注意保持正确的JSON格式。提交空内容视为删除所有记录。"
+                type="info"
+                showIcon
+                style={{ marginBottom: 16 }}
+              />
+              {parseError && (
+                <Alert message="错误" description={parseError} type="error" showIcon style={{ marginBottom: 16 }} />
+              )}
+              <Input.TextArea
+                value={hostDataText}
+                onChange={handleTextChange}
+                rows={15}
+                style={{ fontFamily: 'monospace' }}
+              />
+            </Modal>
+          </Space>
         </Row>
         <Divider dashed plain>
           在任意输入框按下回车会刷新当前页面
@@ -325,12 +426,8 @@ const EditCurrent: React.FC = () => {
                     >
                       <Input onPressEnter={handleReloadPage} />
                     </AutoComplete>
-                    <Button icon={<CopyOutlined />} onClick={() => copyToClipboard(item.value)}>
-                      复制
-                    </Button>
-                    <Button icon={<DeleteOutlined />} onClick={() => handleDeleteParam(item.id)} danger>
-                      删除
-                    </Button>
+                    <Button icon={<CopyOutlined />} onClick={() => copyToClipboard(item.value)}></Button>
+                    <Button icon={<DeleteOutlined />} onClick={() => handleDeleteParam(item.id)} danger></Button>
                   </Space.Compact>
                 ))}
                 <Button icon={<PlusOutlined />} type="primary" onClick={addParam}>
@@ -342,9 +439,7 @@ const EditCurrent: React.FC = () => {
               <Form.Item label="host">
                 <Space.Compact block>
                   <Input value={host} onChange={(e) => setHost(e.target.value)} onPressEnter={handleReloadPage} />
-                  <Button icon={<CopyOutlined />} onClick={() => copyToClipboard(host)}>
-                    复制
-                  </Button>
+                  <Button icon={<CopyOutlined />} onClick={() => copyToClipboard(host)}></Button>
                 </Space.Compact>
               </Form.Item>
             )}
@@ -354,9 +449,7 @@ const EditCurrent: React.FC = () => {
                   <AutoComplete value={path} options={pathOptions} onChange={(value) => setPath(value)}>
                     <Input onPressEnter={handleReloadPage} />
                   </AutoComplete>
-                  <Button icon={<CopyOutlined />} onClick={() => copyToClipboard(path)}>
-                    复制
-                  </Button>
+                  <Button icon={<CopyOutlined />} onClick={() => copyToClipboard(path)}></Button>
                 </Space.Compact>
               </Form.Item>
             )}
@@ -366,9 +459,7 @@ const EditCurrent: React.FC = () => {
                   <AutoComplete value={fragment} options={fragmentOptions} onChange={(value) => setFragment(value)}>
                     <Input onPressEnter={handleReloadPage} />
                   </AutoComplete>
-                  <Button icon={<CopyOutlined />} onClick={() => copyToClipboard(fragment)}>
-                    复制
-                  </Button>
+                  <Button icon={<CopyOutlined />} onClick={() => copyToClipboard(fragment)}></Button>
                 </Space.Compact>
               </Form.Item>
             )}
