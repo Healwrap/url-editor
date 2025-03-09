@@ -1,4 +1,4 @@
-import { CopyOutlined, LinkOutlined } from '@ant-design/icons';
+import { CopyOutlined, LinkOutlined, UndoOutlined } from '@ant-design/icons';
 import { Alert, Button, Card, Divider, List, message, Pagination, Segmented, Select, Space } from 'antd';
 import ButtonGroup from 'antd/es/button/button-group';
 import FormItem from 'antd/es/form/FormItem';
@@ -125,10 +125,10 @@ export default function App() {
           onChange={(val) => setOpen(val)}
         />
         <ButtonGroup>
-          <Button type="primary" onClick={() => handleGetLoginAccessURL()}>
+          <Button type="primary" disabled={!open} onClick={() => handleGetLoginAccessURL()}>
             获取请求链接
           </Button>
-          <Button type="primary" onClick={() => (links && setLinks([]), reloadPage(tab))}>
+          <Button type="primary" icon={<UndoOutlined />} onClick={() => (links && setLinks([]), reloadPage(tab))}>
             刷新页面
           </Button>
         </ButtonGroup>

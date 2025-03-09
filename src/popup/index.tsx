@@ -32,11 +32,11 @@ const App = () => {
           <TabPane tab="获取请求链接" key="2">
             <GetRequest></GetRequest>
           </TabPane>
-          <TabPane tab="储存信息" key="3">
+          <TabPane tab="获取链接" key="3">
+            <GetUrls></GetUrls>
+          <TabPane tab="储存信息" key="4">
             <p>计划做一个可以储存一些信息的页面，在填写url参数时，可以直接使用，待开发</p>
           </TabPane>
-          <TabPane tab="获取链接" key="4">
-            <GetUrls></GetUrls>
           </TabPane>
           <TabPane tab="相关链接" key="5">
             <QuickJump></QuickJump>

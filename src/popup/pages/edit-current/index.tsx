@@ -15,6 +15,7 @@ import ButtonGroup from 'antd/es/button/button-group';
 import { QRCodeSVG } from 'qrcode.react';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import URI from 'urijs';
+import { useStorage } from '@plasmohq/storage/hook';
 
 import { ConfigContext } from '~popup';
 import { copyToClipboard, forwardAndBack, getCurrentURL, openPage, randomString, reloadPage } from '~popup/utils';
@@ -58,6 +59,8 @@ const EditCurrent: React.FC = () => {
   const [path, setPath] = useState('');
   const { tab } = useContext(ConfigContext);
   const paramIndex = useRef(0);
+
+  const [storedUrls, setStoredUrls] = useStorage<string[]>('storedUrls', []);
 
   useEffect(() => {
     (async () => {
@@ -122,6 +125,16 @@ const EditCurrent: React.FC = () => {
     setParams(params.filter((item) => item.id !== id));
   };
 
+  const handleReloadPage = () => {
+    if (!url) return;
+    reloadPage(tab, url);
+  };
+
+  const handleOpenPage = () => {
+    if (!url) return;
+    openPage(tab, url);
+  };
+
   return (
     <Form layout="vertical">
       <Card title="调整URL" extra={<p>方便调整当前页面的URL，包括参数，生成对应的二维码，便于手机调试</p>}>
@@ -141,7 +154,7 @@ const EditCurrent: React.FC = () => {
             <Input
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              onPressEnter={() => url && reloadPage(tab, url)}
+              onPressEnter={handleReloadPage}
             />
             <Button
               icon={<SyncOutlined />}
@@ -159,7 +172,7 @@ const EditCurrent: React.FC = () => {
             <Button icon={<ArrowLeftOutlined />} type="primary" onClick={() => forwardAndBack(tab, 'back')}>
               回退
             </Button>
-            <Button icon={<LinkOutlined />} type="primary" onClick={() => url && openPage(tab, url)}>
+            <Button icon={<LinkOutlined />} type="primary" onClick={handleOpenPage}>
               新标签页打开
             </Button>
             <Button icon={<UndoOutlined />} type="primary" onClick={() => url && reloadPage(tab)}>
@@ -191,12 +204,12 @@ const EditCurrent: React.FC = () => {
                     <Input
                       value={item.key}
                       onChange={(e) => handleKeyChange(item.id, item.key, e.target.value)}
-                      onPressEnter={() => url && reloadPage(tab, url)}
+                      onPressEnter={handleReloadPage}
                     />
                     <Input
                       value={item.value}
                       onChange={(e) => handleValueChange(item.id, item.key, e.target.value)}
-                      onPressEnter={() => url && reloadPage(tab, url)}
+                      onPressEnter={handleReloadPage}
                     />
                     <Button icon={<CopyOutlined />} onClick={() => copyToClipboard(item.value)}>
                       复制
@@ -217,7 +230,7 @@ const EditCurrent: React.FC = () => {
                   <Input
                     value={host}
                     onChange={(e) => setHost(e.target.value)}
-                    onPressEnter={() => url && reloadPage(tab, url)}
+                    onPressEnter={handleReloadPage}
                   />
                   <Button icon={<CopyOutlined />} onClick={() => copyToClipboard(host)}>
                     复制
@@ -231,7 +244,7 @@ const EditCurrent: React.FC = () => {
                   <Input
                     value={path}
                     onChange={(e) => setPath(e.target.value)}
-                    onPressEnter={() => url && reloadPage(tab, url)}
+                    onPressEnter={handleReloadPage}
                   />
                   <Button icon={<CopyOutlined />} onClick={() => copyToClipboard(path)}>
                     复制
@@ -245,7 +258,7 @@ const EditCurrent: React.FC = () => {
                   <Input
                     value={fragment}
                     onChange={(e) => setFragment(e.target.value)}
-                    onPressEnter={() => url && reloadPage(tab, url)}
+                    onPressEnter={handleReloadPage}
                   />
                   <Button icon={<CopyOutlined />} onClick={() => copyToClipboard(fragment)}>
                     复制
