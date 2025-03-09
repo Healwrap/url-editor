@@ -10,7 +10,19 @@ import {
   SyncOutlined,
   UndoOutlined,
 } from '@ant-design/icons';
-import { Button, Card, Col, Divider, Form, Input, message, Row, Space } from 'antd';
+import {
+  AutoComplete,
+  Button,
+  Card,
+  Col,
+  Divider,
+  Form,
+  Input,
+  message,
+  Row,
+  Space,
+  type AutoCompleteProps,
+} from 'antd';
 import ButtonGroup from 'antd/es/button/button-group';
 import { QRCodeSVG } from 'qrcode.react';
 import React, { useContext, useEffect, useRef, useState } from 'react';
@@ -26,14 +38,25 @@ type ParamItem = {
   value: string;
 };
 
+// 定义主机数据类型
+type HostDataType = {
+  [host: string]: {
+    url: string[];
+    param: {
+      [key: string]: string[]; // 记录每个key对应的value列表
+    };
+    path: string[];
+    fragment: string[];
+  };
+};
+
 const mergeParams = (
   existing: ParamItem[], // 现有数组格式参数
   newParams: Record<string, string> // 新解析的键值对参数
 ): ParamItem[] => {
-  // Step 1: 创建快速查找表
+  // 创建快速查找表
   const existingMap = new Map<string, ParamItem>(existing.map((item) => [item.key, item]));
 
-  // Step 2: 创建结果数组
   const merged = Object.entries(newParams).map(([key, value]) => {
     // 保留已有条目的ID（如果存在）
     const existingItem = existingMap.get(key);
@@ -41,12 +64,6 @@ const mergeParams = (
       ? { ...existingItem, value } // 保留ID更新值
       : { id: randomString(10), key, value }; // 新建条目
   });
-
-  // Step 3: 保留不在新参数中的旧参数（根据需求选择）
-  // 如果需要保留旧参数（如用户手动添加）：
-  // existing.forEach(item => {
-  //   if (!newParams[item.key]) merged.push(item)
-  // })
 
   return merged;
 };
@@ -60,20 +77,93 @@ const EditCurrent: React.FC = () => {
   const { tab } = useContext(ConfigContext);
   const paramIndex = useRef(0);
 
-  const [storedUrls, setStoredUrls] = useStorage<string[]>('storedUrls', []);
+  const [currentParamKey, setCurrentParamKey] = useState<string>('');
+  // URL、参数、主机、路径、片段的自动补全选项
+  const [urlOptions, setUrlOptions] = useState<AutoCompleteProps['options']>([]);
+  const [paramKeyOptions, setParamKeyOptions] = useState<AutoCompleteProps['options']>([]);
+  const [pathOptions, setPathOptions] = useState<AutoCompleteProps['options']>([]);
+  const [fragmentOptions, setFragmentOptions] = useState<AutoCompleteProps['options']>([]);
+  const [paramValueOptions, setParamValueOptions] = useState<AutoCompleteProps['options']>([]);
+  // 记录host相关数据
+  const [hostData, setHostData] = useStorage<HostDataType>('hostData', {});
+
+  const isFirstRender = useRef(true); // 用于标记是否首次渲染
+
+  // 提取记录URL信息的逻辑到单独的函数
+  const recordUrlInfo = () => {
+    try {
+      const uri = new URI(url);
+      const currentHost = uri.host();
+      const newParams = uri.query(true);
+
+      if (currentHost && url) {
+        const newHostData = { ...hostData };
+
+        // 初始化该host的数据结构
+        if (!newHostData[currentHost]) {
+          newHostData[currentHost] = { url: [], param: {}, path: [], fragment: [] };
+        }
+
+        // 记录URL
+        if (!newHostData[currentHost].url.includes(url)) {
+          newHostData[currentHost].url = [url, ...newHostData[currentHost].url].slice(0, 10);
+        }
+
+        // 记录参数keys和values
+        Object.entries(newParams).forEach(([key, value]) => {
+          if (!key) return;
+
+          // 确保该key存在于param中
+          if (!newHostData[currentHost].param[key]) {
+            newHostData[currentHost].param[key] = [];
+          }
+
+          // 记录value (如果是新值)
+          if (value && !newHostData[currentHost].param[key].includes(value)) {
+            newHostData[currentHost].param[key] = [value, ...newHostData[currentHost].param[key]].slice(0, 20);
+          }
+        });
+
+        // 记录path
+        const currentPath = uri.path();
+        if (currentPath && !newHostData[currentHost].path.includes(currentPath)) {
+          newHostData[currentHost].path = [currentPath, ...newHostData[currentHost].path].slice(0, 10);
+        }
+
+        // 记录fragment
+        const currentFragment = uri.fragment();
+        if (currentFragment && !newHostData[currentHost].fragment.includes(currentFragment)) {
+          newHostData[currentHost].fragment = [currentFragment, ...newHostData[currentHost].fragment].slice(0, 10);
+        }
+
+        setHostData(newHostData);
+      }
+    } catch (e) {
+      message.error('记录URL信息失败');
+      console.error(e);
+    }
+  };
 
   useEffect(() => {
     (async () => {
       if (!tab?.id) return;
       try {
-        setUrl(await getCurrentURL(tab));
+        const currentURL = await getCurrentURL(tab);
+        setUrl(currentURL);
+
+        // 仅在首次加载时记录URL信息
+        if (isFirstRender.current && currentURL) {
+          isFirstRender.current = false;
+          // 等待URL设置完成后再记录信息
+          setTimeout(() => recordUrlInfo(), 0);
+        }
       } catch {
         message.error('与content script通信失败，请手动刷新页面重试');
       }
     })();
   }, [tab]);
 
-  // 用户手动更新 url 或重置时才解析参数
+  // 用户手动更新 url 或重置时解析参数，但不记录
   useEffect(() => {
     try {
       // 解析新 url，更新 params
@@ -85,6 +175,25 @@ const EditCurrent: React.FC = () => {
       setPath(uri.path());
     } catch {}
   }, [url]);
+
+  // 更新自动补全选项
+  useEffect(() => {
+    if (host && hostData[host]) {
+      setUrlOptions(hostData[host].url.map((u) => ({ value: u })));
+      setParamKeyOptions(Object.keys(hostData[host].param).map((k) => ({ value: k })));
+      setPathOptions(hostData[host].path.map((p) => ({ value: p })));
+      setFragmentOptions(hostData[host].fragment.map((f) => ({ value: f })));
+    }
+  }, [host, hostData]);
+
+  // 当选择参数key时更新对应的value选项
+  useEffect(() => {
+    if (host && hostData[host] && currentParamKey && hostData[host].param[currentParamKey]) {
+      setParamValueOptions(hostData[host].param[currentParamKey].map((v) => ({ value: v })));
+    } else {
+      setParamValueOptions([]);
+    }
+  }, [host, hostData, currentParamKey]);
 
   useEffect(() => {
     try {
@@ -115,10 +224,24 @@ const EditCurrent: React.FC = () => {
   const handleKeyChange = (id: string, oldKey: string, newKey: string) => {
     if (!newKey.trim() || oldKey === newKey) return;
     setParams(params.map((item) => (item.id === id ? { ...item, key: newKey } : item)));
+    setCurrentParamKey(newKey); // 更新当前选中的参数key
   };
 
   const handleValueChange = (id: string, key: string, newValue: string) => {
     setParams(params.map((item) => (item.id === id ? { ...item, value: newValue } : item)));
+
+    // 记录参数值到hostData中
+    if (host && hostData[host] && key) {
+      const newHostData = { ...hostData };
+      if (!newHostData[host].param[key]) {
+        newHostData[host].param[key] = [];
+      }
+
+      if (newValue && !newHostData[host].param[key].includes(newValue)) {
+        newHostData[host].param[key] = [newValue, ...newHostData[host].param[key]].slice(0, 20);
+        setHostData(newHostData);
+      }
+    }
   };
 
   const handleDeleteParam = (id: string) => {
@@ -127,13 +250,22 @@ const EditCurrent: React.FC = () => {
 
   const handleReloadPage = () => {
     if (!url) return;
+    recordUrlInfo(); // 记录URL信息
     reloadPage(tab, url);
   };
 
   const handleOpenPage = () => {
     if (!url) return;
+    recordUrlInfo(); // 记录URL信息
     openPage(tab, url);
   };
+
+  // 初始化当前参数key
+  useEffect(() => {
+    if (params.length > 0 && !currentParamKey) {
+      setCurrentParamKey(params[0].key);
+    }
+  }, [params]);
 
   return (
     <Form layout="vertical">
@@ -151,11 +283,15 @@ const EditCurrent: React.FC = () => {
           }}
         >
           <Space.Compact block>
-            <Input
+            <AutoComplete
               value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              onPressEnter={handleReloadPage}
-            />
+              style={{ width: '100%' }}
+              onSelect={(v) => setUrl(v)}
+              options={urlOptions}
+              allowClear
+            >
+              <Input onChange={(e) => setUrl(e.target.value)} onPressEnter={handleReloadPage} />
+            </AutoComplete>
             <Button
               icon={<SyncOutlined />}
               onClick={async () => {
@@ -196,21 +332,26 @@ const EditCurrent: React.FC = () => {
             )}
           </Col>
           <Col span={14}>
-            <Form.Item label="参数">
+            <Form.Item label="param">
               <Space direction="vertical">
                 {params.map((item) => (
-                  // 使用固定id防止组件重新渲染导致焦点丢失
                   <Space.Compact block key={item.id}>
-                    <Input
+                    <AutoComplete
                       value={item.key}
-                      onChange={(e) => handleKeyChange(item.id, item.key, e.target.value)}
-                      onPressEnter={handleReloadPage}
-                    />
-                    <Input
+                      options={paramKeyOptions}
+                      onChange={(value) => handleKeyChange(item.id, item.key, value)}
+                      onSelect={(value) => setCurrentParamKey(value)}
+                    >
+                      <Input onPressEnter={handleReloadPage} />
+                    </AutoComplete>
+                    <AutoComplete
                       value={item.value}
-                      onChange={(e) => handleValueChange(item.id, item.key, e.target.value)}
-                      onPressEnter={handleReloadPage}
-                    />
+                      options={paramValueOptions}
+                      onChange={(value) => handleValueChange(item.id, item.key, value)}
+                      onFocus={() => setCurrentParamKey(item.key)}
+                    >
+                      <Input onPressEnter={handleReloadPage} />
+                    </AutoComplete>
                     <Button icon={<CopyOutlined />} onClick={() => copyToClipboard(item.value)}>
                       复制
                     </Button>
@@ -225,13 +366,9 @@ const EditCurrent: React.FC = () => {
               </Space>
             </Form.Item>
             {host && (
-              <Form.Item label="域名">
+              <Form.Item label="host">
                 <Space.Compact block>
-                  <Input
-                    value={host}
-                    onChange={(e) => setHost(e.target.value)}
-                    onPressEnter={handleReloadPage}
-                  />
+                  <Input value={host} onChange={(e) => setHost(e.target.value)} onPressEnter={handleReloadPage} />
                   <Button icon={<CopyOutlined />} onClick={() => copyToClipboard(host)}>
                     复制
                   </Button>
@@ -239,13 +376,11 @@ const EditCurrent: React.FC = () => {
               </Form.Item>
             )}
             {path && (
-              <Form.Item label="路径">
+              <Form.Item label="path">
                 <Space.Compact block>
-                  <Input
-                    value={path}
-                    onChange={(e) => setPath(e.target.value)}
-                    onPressEnter={handleReloadPage}
-                  />
+                  <AutoComplete value={path} options={pathOptions} onChange={(value) => setPath(value)}>
+                    <Input onPressEnter={handleReloadPage} />
+                  </AutoComplete>
                   <Button icon={<CopyOutlined />} onClick={() => copyToClipboard(path)}>
                     复制
                   </Button>
@@ -253,13 +388,11 @@ const EditCurrent: React.FC = () => {
               </Form.Item>
             )}
             {fragment && (
-              <Form.Item label="片段">
+              <Form.Item label="fragment">
                 <Space.Compact block>
-                  <Input
-                    value={fragment}
-                    onChange={(e) => setFragment(e.target.value)}
-                    onPressEnter={handleReloadPage}
-                  />
+                  <AutoComplete value={fragment} options={fragmentOptions} onChange={(value) => setFragment(value)}>
+                    <Input onPressEnter={handleReloadPage} />
+                  </AutoComplete>
                   <Button icon={<CopyOutlined />} onClick={() => copyToClipboard(fragment)}>
                     复制
                   </Button>
