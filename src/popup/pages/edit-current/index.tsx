@@ -41,7 +41,6 @@ type ParamItem = {
 // 定义主机数据类型
 type HostDataType = {
   [host: string]: {
-    url: string[];
     param: {
       [key: string]: string[]; // 记录每个key对应的value列表
     };
@@ -78,8 +77,7 @@ const EditCurrent: React.FC = () => {
   const paramIndex = useRef(0);
 
   const [currentParamKey, setCurrentParamKey] = useState<string>('');
-  // URL、参数、主机、路径、片段的自动补全选项
-  const [urlOptions, setUrlOptions] = useState<AutoCompleteProps['options']>([]);
+  // 参数、主机、路径、片段的自动补全选项
   const [paramKeyOptions, setParamKeyOptions] = useState<AutoCompleteProps['options']>([]);
   const [pathOptions, setPathOptions] = useState<AutoCompleteProps['options']>([]);
   const [fragmentOptions, setFragmentOptions] = useState<AutoCompleteProps['options']>([]);
@@ -90,23 +88,19 @@ const EditCurrent: React.FC = () => {
   const isFirstRender = useRef(true); // 用于标记是否首次渲染
 
   // 提取记录URL信息的逻辑到单独的函数
-  const recordUrlInfo = () => {
+  const recordUrlInfo = (cur = '') => {
     try {
-      const uri = new URI(url);
+      const editUrl = url?.length <= 5 ? cur : url;
+      const uri = new URI(editUrl);
       const currentHost = uri.host();
       const newParams = uri.query(true);
 
-      if (currentHost && url) {
+      if (currentHost && editUrl) {
         const newHostData = { ...hostData };
 
         // 初始化该host的数据结构
         if (!newHostData[currentHost]) {
-          newHostData[currentHost] = { url: [], param: {}, path: [], fragment: [] };
-        }
-
-        // 记录URL
-        if (!newHostData[currentHost].url.includes(url)) {
-          newHostData[currentHost].url = [url, ...newHostData[currentHost].url].slice(0, 10);
+          newHostData[currentHost] = { param: {}, path: [], fragment: [] };
         }
 
         // 记录参数keys和values
@@ -137,6 +131,7 @@ const EditCurrent: React.FC = () => {
         }
 
         setHostData(newHostData);
+        console.log('记录URL信息成功', newHostData);
       }
     } catch (e) {
       message.error('记录URL信息失败');
@@ -150,12 +145,12 @@ const EditCurrent: React.FC = () => {
       try {
         const currentURL = await getCurrentURL(tab);
         setUrl(currentURL);
+        console.log({ currentURL, first: isFirstRender.current });
 
         // 仅在首次加载时记录URL信息
         if (isFirstRender.current && currentURL) {
           isFirstRender.current = false;
-          // 等待URL设置完成后再记录信息
-          setTimeout(() => recordUrlInfo(), 0);
+          recordUrlInfo(currentURL);
         }
       } catch {
         message.error('与content script通信失败，请手动刷新页面重试');
@@ -179,7 +174,6 @@ const EditCurrent: React.FC = () => {
   // 更新自动补全选项
   useEffect(() => {
     if (host && hostData[host]) {
-      setUrlOptions(hostData[host].url.map((u) => ({ value: u })));
       setParamKeyOptions(Object.keys(hostData[host].param).map((k) => ({ value: k })));
       setPathOptions(hostData[host].path.map((p) => ({ value: p })));
       setFragmentOptions(hostData[host].fragment.map((f) => ({ value: f })));
@@ -229,19 +223,6 @@ const EditCurrent: React.FC = () => {
 
   const handleValueChange = (id: string, key: string, newValue: string) => {
     setParams(params.map((item) => (item.id === id ? { ...item, value: newValue } : item)));
-
-    // 记录参数值到hostData中
-    if (host && hostData[host] && key) {
-      const newHostData = { ...hostData };
-      if (!newHostData[host].param[key]) {
-        newHostData[host].param[key] = [];
-      }
-
-      if (newValue && !newHostData[host].param[key].includes(newValue)) {
-        newHostData[host].param[key] = [newValue, ...newHostData[host].param[key]].slice(0, 20);
-        setHostData(newHostData);
-      }
-    }
   };
 
   const handleDeleteParam = (id: string) => {
@@ -283,14 +264,7 @@ const EditCurrent: React.FC = () => {
           }}
         >
           <Space.Compact block>
-            <AutoComplete
-              value={url}
-              style={{ width: '100%' }}
-              onSelect={(v) => setUrl(v)}
-              options={urlOptions}
-            >
-              <Input onChange={(e) => setUrl(e.target.value)} onPressEnter={handleReloadPage} />
-            </AutoComplete>
+            <Input value={url} onChange={(e) => setUrl(e.target.value)} onPressEnter={handleReloadPage} />
             <Button
               icon={<SyncOutlined />}
               onClick={async () => {
