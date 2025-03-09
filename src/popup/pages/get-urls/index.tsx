@@ -10,9 +10,8 @@ import { copyToClipboard, getLinks, openPage, reloadPage } from '~popup/utils';
 
 const options = ['iframe', 'a', 'img'];
 
-const PageList = ({ dataSource }: { dataSource: { url: string; key: number }[] }) => {
+const PageList = ({ dataSource, isImg }: { dataSource: { url: string; key: number }[]; isImg: boolean }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [resolvedLinks, setResolvedLinks] = useState<{ [key: number]: string }>({});
   const pageSize = 5;
   const paginatedData = dataSource.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
@@ -20,59 +19,29 @@ const PageList = ({ dataSource }: { dataSource: { url: string; key: number }[] }
     setCurrentPage(page);
   };
 
-  const isImageUrl = (url: string, key: number) => {
-    if (resolvedLinks[key] && resolvedLinks[key].startsWith('http') && resolvedLinks[key].includes('image')) {
-      return true;
-    }
-    if (url.startsWith('data:image/')) {
-      return true;
-    }
-    const uri = new URI(url);
-    const path = uri.path();
-    // 匹配以图片扩展名结尾的路径，忽略后续的参数
-    return /\.(jpeg|jpg|gif|png|webp|svg)(@|$)/i.test(path);
-  };
-
-  const resolveLink = async (key: number, url: string) => {
-    if (resolvedLinks[key]) return; // 如果已经解析过，直接返回
-    try {
-      const response = await fetch(url, { method: 'HEAD', redirect: 'follow' });
-      const finalUrl = response.url || url; // 获取最终的重定向链接
-      setResolvedLinks((prev) => ({ ...prev, [key]: finalUrl }));
-    } catch {
-      message.error(`无法解析链接: ${url}`);
-    }
-  };
-
-  useEffect(() => {
-    // 自动解析当前页的链接
-    paginatedData.forEach((item) => resolveLink(item.key, item.url));
-  }, [paginatedData]);
-
   return (
     <>
       <List
         itemLayout="horizontal"
         dataSource={paginatedData}
         renderItem={(item) => {
-          const resolvedUrl = resolvedLinks[item.key] || item.url; // 使用解析后的链接
           return (
             <List.Item
               key={item.key}
               actions={[
-                <Button icon={<CopyOutlined />} onClick={() => copyToClipboard(resolvedUrl)}>
+                <Button icon={<CopyOutlined />} onClick={() => copyToClipboard(item.url)}>
                   复制
                 </Button>,
-                <Button icon={<LinkOutlined />} onClick={() => window.open(resolvedUrl, '_blank')}>
+                <Button icon={<LinkOutlined />} onClick={() => window.open(item.url, '_blank')}>
                   跳转
                 </Button>,
               ]}
             >
               <List.Item.Meta
                 title={
-                  isImageUrl(resolvedUrl, item.key) ? (
+                  isImg ? (
                     <Image
-                      src={resolvedUrl}
+                      src={item.url}
                       alt="图片"
                       style={{ maxWidth: 300, maxHeight: 300 }}
                       placeholder={<LoadingOutlined style={{ fontSize: 20 }} />}
@@ -85,7 +54,7 @@ const PageList = ({ dataSource }: { dataSource: { url: string; key: number }[] }
                         textOverflow: 'ellipsis',
                       }}
                     >
-                      {resolvedUrl}
+                      {item.url}
                     </div>
                   )
                 }
@@ -143,7 +112,7 @@ const App: React.FC = () => {
           <Divider dashed plain>
             {key}
           </Divider>
-          <PageList dataSource={links[key]} />
+          <PageList dataSource={links[key]} isImg={key === 'img'} />
         </div>
       ))}
       <Divider dashed plain>

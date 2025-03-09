@@ -288,7 +288,6 @@ const EditCurrent: React.FC = () => {
               style={{ width: '100%' }}
               onSelect={(v) => setUrl(v)}
               options={urlOptions}
-              allowClear
             >
               <Input onChange={(e) => setUrl(e.target.value)} onPressEnter={handleReloadPage} />
             </AutoComplete>
